@@ -255,11 +255,32 @@ async function fetchData() {
                     ...row,
                     _originalRow: i + 2 // +1 for 1-based index, +1 for header row
                 }));
-                const validRows = rowsWithNumbers.filter(row => row['Peptide Name'] && row['Price (USD)']);
+                const validRows = rowsWithNumbers.filter(row => {
+                    const keys = Object.keys(row);
+                    const nameKey = keys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('peptide'));
+                    const priceKey = keys.find(k => k.toLowerCase().includes('price'));
+                    return nameKey && priceKey && row[nameKey] && row[priceKey];
+                });
                 
                 const grouped = {};
                 validRows.forEach(row => {
-                    const name = row['Peptide Name'].trim();
+                    const keys = Object.keys(row);
+                    const nameKey = keys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('peptide'));
+                    const priceKey = keys.find(k => k.toLowerCase().includes('price'));
+                    const codeKey = keys.find(k => k.toLowerCase().includes('code'));
+                    
+                    let rawName = row[nameKey].trim();
+                    let name = rawName;
+                    let dosageExtract = "Standard";
+                    
+                    // Extract dosage from the name (e.g. "Semaglutide 5mg" -> "Semaglutide" and "5mg")
+                    // Looks for a space followed by a digit
+                    const splitIdx = rawName.search(/\s\d/);
+                    if (splitIdx !== -1) {
+                        name = rawName.substring(0, splitIdx).trim();
+                        dosageExtract = rawName.substring(splitIdx + 1).trim();
+                    }
+
                     if (!grouped[name]) {
                         grouped[name] = {
                             name: name,
@@ -267,11 +288,9 @@ async function fetchData() {
                         };
                     }
                     
-                    let boxPackage = row['Box Package'];
-                    let dosageExtract = boxPackage.split('*')[0] || boxPackage;
-                    dosageExtract = dosageExtract.replace(/\s/g, ''); 
+                    let boxPackage = "10vials"; // Default for bulk orders
                     
-                    let rawPriceStr = row['Price (USD)'].trim();
+                    let rawPriceStr = row[priceKey].trim();
                     let numericPrice = parseFloat(rawPriceStr.replace(/[^0-9.]/g, ''));
                     // Removed the 50% markup for the retail/bulk menu 
                     let displayPrice = '$' + numericPrice.toFixed(2);
@@ -280,7 +299,7 @@ async function fetchData() {
                         boxPackage: boxPackage,
                         dosageExtract: dosageExtract,
                         price: displayPrice,
-                        code: row['Code'] ? row['Code'].trim() : '',
+                        code: codeKey && row[codeKey] ? row[codeKey].trim() : '',
                         sheetRow: row._originalRow
                     });
                 });
