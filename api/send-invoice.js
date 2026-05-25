@@ -53,6 +53,11 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'Invoice sent successfully!' });
     } catch (error) {
         console.error("Error sending email:", error);
-        return res.status(500).json({ error: 'Failed to send email. Error details: ' + error.message });
+        
+        const emailVar = process.env.SMTP_EMAIL || 'MISSING';
+        const passVar = process.env.SMTP_PASSWORD || 'MISSING';
+        const debugInfo = `[Email='${emailVar}', PassLength=${passVar.length}, PassStarts='${passVar.substring(0, 2)}']`;
+        
+        return res.status(500).json({ error: `Failed to send email. Debug: ${debugInfo} Error details: ${error.message}` });
     }
 }
