@@ -3,6 +3,70 @@ const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1WvO9yzQDyfnU9j7fdow5q
 let allPeptides = [];
 let orderCart = {};
 
+function getImagePath(name, dosage) {
+    const searchString = (name + " " + dosage).toLowerCase();
+    
+    if (searchString.includes("bpc") && searchString.includes("tb")) return "assets/bpc_tb_10mg.jpeg";
+    if (searchString.includes("bpc")) return "assets/bpc_157.jpeg";
+    if (searchString.includes("cjc") && searchString.includes("ipa")) return "assets/cjc1295_ipa_10mg.png";
+    if (searchString.includes("ghk")) return "assets/ghk_50mg.png";
+    if (searchString.includes("glow")) return "assets/glow_70mg.jpeg";
+    
+    if (searchString.includes("semaglutide")) {
+        if (searchString.includes("15") || searchString.includes("14")) return "assets/semaglutide_15mg.jpeg";
+        if (searchString.includes("20")) return "assets/semaglutide_20mg.jpeg";
+        if (searchString.includes("5")) return "assets/semaglutide_5mg.jpeg";
+        return "assets/semaglutide_15mg.jpeg";
+    }
+    
+    if (searchString.includes("tirzepatide") || searchString.includes("tirsepatide")) {
+        if (searchString.includes("15")) return "assets/tirsepatide_15mg.jpeg";
+        if (searchString.includes("20")) return "assets/tirsepatide_20mg.jpeg";
+        if (searchString.includes("5")) return "assets/tirsepatide_5mg.jpeg";
+        return "assets/tirsepatide_15mg.jpeg";
+    }
+    
+    if (searchString.includes("retatrutide") || searchString.includes("retatruride")) {
+        if (searchString.includes("5")) return "assets/retatrutide_5mg.jpeg";
+        if (searchString.includes("10")) return "assets/retatrutide_10mg.jpeg";
+        return "assets/retatrutide_10mg.jpeg";
+    }
+    
+    if (searchString.includes("nad")) {
+        if (searchString.includes("1000")) return "assets/nad_plus_1000mg.jpeg";
+        return "assets/NAD_10mg.jpeg";
+    }
+    
+    if (searchString.includes("igf")) return "assets/IGF-1_LR3.jpeg";
+    
+    if (searchString.includes("selank")) {
+        if (searchString.includes("10")) return "assets/selank_10mg.jpeg";
+        return "assets/selank_5mg.jpeg";
+    }
+    
+    if (searchString.includes("semax")) {
+        if (searchString.includes("10")) return "assets/semax_10mg.jpeg";
+        return "assets/semax_5mg.jpeg";
+    }
+    
+    if (searchString.includes("tesamorelin")) {
+        if (searchString.includes("10")) return "assets/tesamorelin_10mg.jpeg";
+        return "assets/tesamorelin_5mg.jpeg";
+    }
+    
+    if (searchString.includes("glp") && searchString.includes("sg")) {
+        if (searchString.includes("10")) return "assets/glp_sg_10mg.jpeg";
+        return "assets/glp_sg_5mg.jpeg";
+    }
+    if (searchString.includes("glp") && searchString.includes("tz")) {
+        if (searchString.includes("10")) return "assets/glp_tz_10mg.jpeg";
+        if (searchString.includes("20")) return "assets/glp_tz_20mg.jpeg";
+        return "assets/glp_tz_5mg.jpeg";
+    }
+
+    return "assets/blank-vial.png";
+}
+
 function updateOrderTotal() {
     let total = 0;
     const previewContainer = document.getElementById('cartPreview');
@@ -344,11 +408,15 @@ function renderGrid(searchTerm = '') {
         variantHtml += '</div>';
 
         const defaultVariant = peptide.variants[0];
+        const imagePath = getImagePath(peptide.name, defaultVariant.dosageExtract);
 
         card.innerHTML = `
             <div class="vial-container">
-                <img src="assets/blank-vial.png" alt="${peptide.name} vial" class="vial-image" loading="lazy">
-                <div class="vial-overlay">
+                <img src="${imagePath}" 
+                     onerror="this.onerror=null; this.src='assets/blank-vial.png'; this.nextElementSibling.style.display='flex';" 
+                     onload="if(this.src.includes('blank-vial')) { this.nextElementSibling.style.display='flex'; } else { this.nextElementSibling.style.display='none'; }"
+                     alt="${peptide.name} vial" class="vial-image" loading="lazy">
+                <div class="vial-overlay" style="display: none;">
                     <div class="overlay-name" id="overlay-name-${index}">${truncateName(peptide.name)}</div>
                     <div class="overlay-dosage" id="overlay-dosage-${index}">${defaultVariant.dosageExtract}</div>
                 </div>
@@ -384,6 +452,12 @@ function renderGrid(searchTerm = '') {
             
             document.getElementById(`overlay-dosage-${cardId}`).innerText = variant.dosageExtract;
             document.getElementById(`price-${cardId}`).innerHTML = `${variant.price} <span class="price-label">/ 10 vials</span>`;
+            
+            const cardEl = e.target.closest('.product-card');
+            const imgEl = cardEl.querySelector('.vial-image');
+            if (imgEl) {
+                imgEl.src = getImagePath(peptide.name, variant.dosageExtract);
+            }
             
             const cartKey = peptide.name + '|' + variant.boxPackage;
             const currentQty = orderCart[cartKey] ? orderCart[cartKey].qty : 0;
