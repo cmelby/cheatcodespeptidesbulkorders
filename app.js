@@ -155,25 +155,28 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const element = document.getElementById('invoiceHTML');
                 
-                // Temporarily expand the container to prevent PDF cutoff
-                const originalMaxHeight = element.style.maxHeight;
-                const originalOverflow = element.style.overflowY;
-                element.style.maxHeight = 'none';
-                element.style.overflowY = 'visible';
+                // Create an off-screen clone guaranteed to have no clipping from parent modals
+                const clone = element.cloneNode(true);
+                clone.style.position = 'absolute';
+                clone.style.top = '-9999px';
+                clone.style.left = '-9999px';
+                clone.style.width = '900px'; // Fixed desktop width
+                clone.style.maxHeight = 'none';
+                clone.style.overflow = 'visible';
+                document.body.appendChild(clone);
 
                 const opt = {
                   margin:       0.2,
                   filename:     'CheatCodes_Invoice.pdf',
                   image:        { type: 'jpeg', quality: 0.98 },
-                  html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: element.scrollWidth, windowHeight: element.scrollHeight },
+                  html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: 900 },
                   jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
 
-                const pdfBase64 = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+                const pdfBase64 = await html2pdf().set(opt).from(clone).outputPdf('datauristring');
                 
-                // Restore original styles
-                element.style.maxHeight = originalMaxHeight;
-                element.style.overflowY = originalOverflow;
+                // Remove the clone after generating PDF
+                document.body.removeChild(clone);
                 
                 statusEl.innerText = "Sending Email...";
 
