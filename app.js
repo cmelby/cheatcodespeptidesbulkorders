@@ -154,15 +154,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const element = document.getElementById('invoiceHTML');
+                
+                // Temporarily expand the container to prevent PDF cutoff
+                const originalMaxHeight = element.style.maxHeight;
+                const originalOverflow = element.style.overflowY;
+                element.style.maxHeight = 'none';
+                element.style.overflowY = 'visible';
+
                 const opt = {
                   margin:       0.2,
                   filename:     'CheatCodes_Invoice.pdf',
                   image:        { type: 'jpeg', quality: 0.98 },
-                  html2canvas:  { scale: 2, backgroundColor: '#000000' },
+                  html2canvas:  { scale: 2, backgroundColor: '#000000', windowWidth: element.scrollWidth, windowHeight: element.scrollHeight },
                   jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
                 };
 
                 const pdfBase64 = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+                
+                // Restore original styles
+                element.style.maxHeight = originalMaxHeight;
+                element.style.overflowY = originalOverflow;
                 
                 statusEl.innerText = "Sending Email...";
 
